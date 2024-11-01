@@ -2,9 +2,12 @@ import os
 import codecs
 import re
 from tqdm import tqdm
+
 import itertools
+import spacy
+
 from analisisCandidates import analisis_of_candidates
-from candidatesExtraction import extract_candidates
+from candidatesExtraction import candidatesExtraction
 
 MAX_LEN_CANDIDATE = 6
 
@@ -47,10 +50,11 @@ def clean_dataset(data_path="data/docsutf8", labels_path="data/keys"):
             f.close()
      
     candidates = {}
-    data = dict(itertools.islice(data.items(), 5)) 
-    references = dict(itertools.islice(references.items(), 5)) 
+    #data = dict(itertools.islice(data.items(), 5)) 
+    #references = dict(itertools.islice(references.items(), 5))
+    candidates_extractor = candidatesExtraction()
     for idx, (key, doc) in tqdm(enumerate(data.items()),desc="Calculating the candidates of each document",total=len(data)):
-        candidates_of_doc = extract_candidates(doc,key)    # FORMAT CANDIDATES [(candidate1,pos),(candidate2,pos),...]
+        candidates_of_doc = candidates_extractor.extract_candidates(doc,key)    # FORMAT CANDIDATES [(candidate1,pos),(candidate2,pos),...]
         candidates[key] = candidates_of_doc
     analisis_of_candidates(references, candidates)
     return data, references

@@ -51,8 +51,15 @@ class candidatesExtraction:
     
     def apply_regular_expresion(self):
         self.matcher = Matcher(self.natural_language_processor.vocab)
+        # TODO: Investigar cambiar LOWER IN de con por todos las preposiciones en español que existen
         self.pattern = [{"POS":{"IN": ["ADJ", "PROPN", "NOUN"]}, "OP": "+"} , {"LOWER": {"IN": ["de", "con"]}, "OP":"?"}, {"POS": "DET", "OP": "?" } ,{"POS":{"IN": ["ADJ", "PROPN", "NOUN"]}, "OP": "*"}, {"LOWER": {"IN": ["de", "con"]}, "OP":"?"}, {"POS": "DET", "OP": "?" } ,{"POS":{"IN": ["ADJ", "PROPN", "NOUN"]}, "OP": "*"}]
-        self.matcher.add("Candidates", [self.pattern], on_match=self.apped_candidates_matches, greedy=self.greedy)    # by adding the greedy="LONGEST" wi will get only the longest matches
+        if(self.greedy == "COMBINED"):
+            self.matcher.add("Candidates", [self.pattern], on_match=self.apped_candidates_matches, greedy="LONGEST")
+            self.matcher.add("Candidates", [self.pattern], on_match=self.apped_candidates_matches, greedy="FIRST")
+        elif(self.greedy == "NONE"):
+            self.matcher.add("Candidates", [self.pattern], on_match=self.apped_candidates_matches)
+        else:
+            self.matcher.add("Candidates", [self.pattern], on_match=self.apped_candidates_matches, greedy=self.greedy)    # by adding the greedy="LONGEST" wi will get only the longest matches
         self.matches = self.matcher(self.processed_text)
 
     def extract_candidates(self, input_text: str, key: str):

@@ -22,12 +22,9 @@ def clean_text(text: str) -> str:
     text = pattern4.sub('.', text)
     pattern5 = re.compile(r'\s{2,}')
     text = pattern5.sub(" ", text)
-    # TODO: delete Refs if they don´t retrieve relevant information
-    # TODO: add relevant preprocssing in the future and try with different preprocessings
-    # TODO: preprocess the repetitive text (el siguiente el siguient...)
     return text
     
-def clean_dataset(data_path="data/docsutf8", labels_path="data/keys"):
+def clean_dataset( regular_expression : bool, graph_title: str, greedy: str, data_path="data/docsutf8", labels_path="data/keys"):
     data = {}
     references = {}
     for dirname,dirnames ,filenames in os.walk(data_path):
@@ -52,9 +49,9 @@ def clean_dataset(data_path="data/docsutf8", labels_path="data/keys"):
     candidates = {}
     #data = dict(itertools.islice(data.items(), 5)) 
     #references = dict(itertools.islice(references.items(), 5))
-    candidates_extractor = candidatesExtraction()
+    candidates_extractor = candidatesExtraction(regular_expression ,greedy)
     for idx, (key, doc) in tqdm(enumerate(data.items()),desc="Calculating the candidates of each document",total=len(data)):
-        candidates_of_doc = candidates_extractor.extract_candidates(doc, key, regular_expresion=True)    # get the candidates with FORMAT [(candidate1,pos),(candidate2,pos),...]
+        candidates_of_doc = candidates_extractor.extract_candidates(doc, key)    # get the candidates with FORMAT [(candidate1,pos),(candidate2,pos),...]
         candidates[key] = candidates_of_doc
-    analisis_of_candidates(references, candidates, title="Expresión Regular  --- Scpacy")
+    analisis_of_candidates(references, candidates, title = graph_title)
     return data, references

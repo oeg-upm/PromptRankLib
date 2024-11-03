@@ -7,8 +7,10 @@ from spacy.matcher import Matcher
 
 class candidatesExtraction:
 
-    def __init__(self) -> None:
+    def __init__(self, regular_expression : bool, greedy: str) -> None:
         self.natural_language_processor = spacy.load("es_core_news_sm")  #importante
+        self.greedy = greedy
+        self.regular_expression = regular_expression
     
     def merge_adp_chunks(self, chunk: Span, current_chunk_completed = '') -> None:
             current_chunk_completed = current_chunk_completed + chunk.text
@@ -42,7 +44,7 @@ class candidatesExtraction:
             text_to_clean = text_to_clean.split(' ', 1)[1]
         return text_to_clean
     
-    def apped_candidates_matches(self,matcher, doc, i, matches):
+    def apped_candidates_matches(self,matcher, doc: Doc, i, matches):
         match_id, start, end = matches[i]
         candidate_text = doc[start:end]
         self.keyphrase_candidate.append(([candidate_text.text, (start, end)]))
@@ -50,13 +52,13 @@ class candidatesExtraction:
     def apply_regular_expresion(self):
         self.matcher = Matcher(self.natural_language_processor.vocab)
         self.pattern = [{"POS":{"IN": ["ADJ", "PROPN", "NOUN"]}, "OP": "+"} , {"LOWER": {"IN": ["de", "con"]}, "OP":"?"}, {"POS": "DET", "OP": "?" } ,{"POS":{"IN": ["ADJ", "PROPN", "NOUN"]}, "OP": "*"}, {"LOWER": {"IN": ["de", "con"]}, "OP":"?"}, {"POS": "DET", "OP": "?" } ,{"POS":{"IN": ["ADJ", "PROPN", "NOUN"]}, "OP": "*"}]
-        self.matcher.add("Candidates", [self.pattern], on_match=self.apped_candidates_matches, greedy="LONGEST")    # by adding the greedy="LONGEST" wi will get only the longest matches
+        self.matcher.add("Candidates", [self.pattern], on_match=self.apped_candidates_matches, greedy=self.greedy)    # by adding the greedy="LONGEST" wi will get only the longest matches
         self.matches = self.matcher(self.processed_text)
 
-    def extract_candidates(self, input_text: str, key: str, regular_expresion : bool = False):
+    def extract_candidates(self, input_text: str, key: str):
         self.keyphrase_candidate = []
         self.processed_text = self.natural_language_processor(input_text)
-        if (regular_expresion == True):
+        if (self.regular_expression == True):
             self.apply_regular_expresion()
             return self.keyphrase_candidate
         else:

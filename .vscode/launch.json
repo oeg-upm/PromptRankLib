@@ -9,10 +9,8 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
-            "console": "integratedTerminal"
-            //"args": [
-            //    "${command:pickArgs}"
-            //]
+            "console": "integratedTerminal",
+            "args": ["--greedy", "LONGEST", "--title_graph_candidates_extraction", "Extracción Candidatos Expresión Regular LONGEST"]
         }
     ]
 }

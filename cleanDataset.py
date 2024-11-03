@@ -54,7 +54,7 @@ def clean_dataset(data_path="data/docsutf8", labels_path="data/keys"):
     #references = dict(itertools.islice(references.items(), 5))
     candidates_extractor = candidatesExtraction()
     for idx, (key, doc) in tqdm(enumerate(data.items()),desc="Calculating the candidates of each document",total=len(data)):
-        candidates_of_doc = candidates_extractor.extract_candidates(doc,key)    # FORMAT CANDIDATES [(candidate1,pos),(candidate2,pos),...]
+        candidates_of_doc = candidates_extractor.extract_candidates(doc, key, regular_expresion=True)    # get the candidates with FORMAT [(candidate1,pos),(candidate2,pos),...]
         candidates[key] = candidates_of_doc
-    analisis_of_candidates(references, candidates)
+    analisis_of_candidates(references, candidates, title="Expresión Regular  --- Scpacy")
     return data, references

@@ -9,7 +9,7 @@ def appears_in_candidates(document_key: str, candidates: dict, keyphrase_to_sear
             return True
     return False
 
-def analisis_of_candidates (references : dict, candidates : dict)-> None:
+def analisis_of_candidates (references : dict, candidates : dict, title: str)-> None:
     percentaje_correct = []
     for idx, (key, array_of_keyphrases) in enumerate(references.items()):
         number_of_keyphrases = 0
@@ -21,8 +21,12 @@ def analisis_of_candidates (references : dict, candidates : dict)-> None:
             number_of_keyphrases = number_of_keyphrases + 1
         percentaje_correct.append((detected/number_of_keyphrases)*100)
     
+    mean_value = np.mean(percentaje_correct)
     plt.plot(percentaje_correct)
-    plt.axhline(y=np.mean(percentaje_correct), color='r', linestyle='-', label='Mean')
+    plt.axhline(y=mean_value, color='r', linestyle='-', label='Mean')
+    plt.text(x=len(percentaje_correct)-1, y=mean_value, s=f'       {mean_value:.2f}', color='red', va='center')
     plt.legend()
-    plt.ylabel('Detected keyphrases')
-    plt.savefig('KFdetected')
+    plt.title(title)
+    plt.xticks([])  # hiding x axis numbers
+    plt.ylabel('Porcentaje de Frases Clave Detectadas')
+    plt.savefig(title)

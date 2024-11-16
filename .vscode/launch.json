@@ -7,7 +7,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "args": ["--greedy", "NONE", "--title_graph_candidates_extraction", "Extracción Candidatos COMBINADA FIRST+LONGEST"]
+            "args": ["--greedy", "FIRST", "--title_graph_candidates_extraction", "Extracción Candidatos COMBINADA FIRST+LONGEST"]
         }
     ]
 }

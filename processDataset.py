@@ -12,10 +12,6 @@ import spacy
 from analisisCandidates import analisis_of_candidates
 from candidatesExtraction import candidatesExtraction
 
-MAX_LEN_DOCUMENT = 512
-TEMPLATE_ENCODER = "Texto:"
-TEMPLATE_DECODER = "Este texto habla principalmente de "
-
 def clean_text(text: str) -> str:
     pattern1 = re.compile(r'\[\d+([,-]\d+)*\]')
     text = pattern1.sub("", text)   # borrado de todas las referencias del estilo [n]\[n,n]\[n-n]
@@ -48,14 +44,14 @@ class KeyPhrasesExtractionDataset(Dataset):
 
         return [en_input_ids, en_input_mask, de_input_ids, dic]
 
-def generate_doc_pairs(doc: str, candidates: list, idx: int, tokenizer: T5Tokenizer) -> list[list,int]:
+def generate_doc_pairs(doc: str, candidates: list, idx: int, tokenizer: T5Tokenizer, prompt: str, max_len:str) -> list[list,int]:
     candidate_document_pairs = []
-    inputs_ids = tokenizer(doc, max_length=MAX_LEN_DOCUMENT, padding="max_length", truncation=True, return_tensors="pt")
+    inputs_ids = tokenizer(doc, max_length=max_len, padding="max_length", truncation=True, return_tensors="pt")
     enconder_input_ids = inputs_ids["input_ids"]
     enconder_input_mask = inputs_ids["attention_mask"]
     for candidate_and_pos in candidates:
         candidate = candidate_and_pos[0]
-        decoder_input = TEMPLATE_DECODER + candidate + " ."
+        decoder_input = prompt + candidate + " ."
         decoder_input_ids = tokenizer(decoder_input, max_length=30, padding="max_length", truncation=True, return_tensors="pt")["input_ids"]
         decoder_input_ids [0, 0] = 0
         de_input_len = (decoder_input_ids[0] == tokenizer.eos_token_id).nonzero()[0].item() - 2
@@ -63,7 +59,8 @@ def generate_doc_pairs(doc: str, candidates: list, idx: int, tokenizer: T5Tokeni
         candidate_document_pairs.append([enconder_input_ids, enconder_input_mask, decoder_input_ids, dic])
     return candidate_document_pairs, 0      #TODO: implement the count value
     
-def clean_dataset( regular_expression : bool, graph_title: str, greedy: str, data_path="data/docsutf8", labels_path="data/keys"):
+def clean_dataset( regular_expression : bool, graph_title: str, greedy: str, encoder_header: str, prompt: str, max_len: int,
+                   model_version: str, data_path="data/docsutf8", labels_path="data/keys"):
     data = {}
     references = {}
     for dirname,dirnames ,filenames in os.walk(data_path):
@@ -92,15 +89,15 @@ def clean_dataset( regular_expression : bool, graph_title: str, greedy: str, dat
     document_pairs = []
     documents_list = []
     labels = []
-    tokenizer = MT5Tokenizer.from_pretrained("google/mt5-base")
+    tokenizer = MT5Tokenizer.from_pretrained(f"google/mt5-{model_version}")
     for idx, (key, doc) in tqdm(enumerate(data.items()),desc="Calculating the candidates of each document",total=len(data)):
         labels.append([ref.replace(" \n", "") for ref in references[key]])
         candidates_of_each_doc = candidates_extractor.extract_candidates(doc, key)    # get the candidates with FORMAT [(candidate1,pos),(candidate2,pos),...]
         candidates[key] = candidates_of_each_doc    # get the candidates with FORMAT [(candidate1,pos),(candidate2,pos),...]
-        doc = ' '.join(doc.split()[:MAX_LEN_DOCUMENT])
+        doc = ' '.join(doc.split()[:max_len])
         documents_list.append(doc)
-        doc = TEMPLATE_ENCODER + "\"" + doc + "\""
-        candidate_document_input, count = generate_doc_pairs(doc, candidates_of_each_doc, idx, tokenizer)
+        doc = encoder_header + "\"" + doc + "\""
+        candidate_document_input, count = generate_doc_pairs(doc, candidates_of_each_doc, idx, tokenizer, prompt, max_len)
         document_pairs.extend(candidate_document_input)
     #analisis_of_candidates(references, candidates, title = graph_title)
     dataset = KeyPhrasesExtractionDataset(document_pairs)

@@ -50,6 +50,9 @@ def keyphrase_selection(setting_dict: list, documents_list: list, labels_stemed:
                 logits = logits.softmax(dim=1)  # each candidate probability is also represented by a array length 32128
                 logits = logits.cpu().numpy()   # convert pythorch tensor into numpy array, this can only be done in the cpu
                 for j in range(de_input_ids.shape[0]):  # # j refers to each prompt+candidate input (index)
+                    # TODO: el problema de las malas predicciones puede ser que esté dandose debido
+                    # a que calculamos mal la longitud de los candidatos y cuando no tenemos que analizarlos
+                    # más. Es por ello que los candidatos de mayor tamaño están sufriendo está penalización
                     if i < dic["de_input_len"][j]:
                         score[j] = score[j] + np.log(logits[j, int(de_input_ids[j][i + 1])])    # to select corresponding tensor in vector score
                     elif i == dic["de_input_len"][j]:

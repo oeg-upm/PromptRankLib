@@ -5,6 +5,8 @@ import argparse
 from processDataset import clean_dataset
 from torch.utils.data import DataLoader
 
+from keyphraseExtraction import keyphrase_selection
+
 def get_setting_dict(encoder_header: str, prompt: str, max_len: int, model_version: str):
     setting_dict = {}
     setting_dict["max_len"] = max_len
@@ -12,8 +14,8 @@ def get_setting_dict(encoder_header: str, prompt: str, max_len: int, model_versi
     setting_dict["temp_de"] = prompt
     setting_dict["model"] = model_version
     #TODO: what are the advantages of enable_filter and enable_pos
-    #setting_dict["enable_filter"] = False
-    #setting_dict["enable_pos"] = True
+    setting_dict["enable_filter"] = False
+    setting_dict["enable_pos"] = True
     setting_dict["position_factor"] = 1.2e8
     setting_dict["length_factor"] = 0.6
     return setting_dict
@@ -70,6 +72,7 @@ def main():
     dataset, documents_list, labels, labels_stemed = clean_dataset(args.regular_expresion_value, args.title_graph_candidates_extraction, args.greedy,
                                                                    args.encoder_header, args.prompt, args.max_len, args.model_version)
     dataloader = DataLoader(dataset, num_workers=4, batch_size=args.batch_size)
+    keyphrase_selection(setting_dict, documents_list, labels_stemed, labels, dataloader, logger, args.model_version)
     logger.info(f'The execution has finished {datetime.datetime.now()}')
 
 if __name__ == "__main__":

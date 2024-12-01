@@ -15,14 +15,20 @@ from candidatesExtraction import candidatesExtraction
 def clean_text(text: str) -> str:
     pattern1 = re.compile(r'\[\d+([,-]\d+)*\]')
     text = pattern1.sub("", text)   # borrado de todas las referencias del estilo [n]\[n,n]\[n-n]
-    pattern2 = re.compile(r'\s[)]')
-    text = pattern2.sub(')', text)
+    pattern2 = re.compile(r'\w[)]')
+    text = pattern2.sub(' )', text)
+    pattern2_1 = re.compile(r'[)]\w')
+    text = pattern2_1.sub(') ', text)
+    pattern2_2 = re.compile(r'\w[(]')
+    text = pattern2_2.sub(' (', text)
+    pattern2_3 = re.compile(r'[(]\w')
+    text = pattern2_3.sub('( ', text)
     pattern3 = re.compile(r'\s[,]')
     text = pattern3.sub(',', text)
     pattern4 = re.compile(r'\s[.]')
     text = pattern4.sub('.', text)
     pattern5 = re.compile(r'\s{2,}')
-    text = pattern5.sub(" ", text)
+    text = pattern5.sub(' ', text)
     return text
 
 class KeyPhrasesExtractionDataset(Dataset):
@@ -83,8 +89,8 @@ def clean_dataset( regular_expression : bool, graph_title: str, greedy: str, enc
             f.close()
     candidates = {}
     #TODO: remove 2 lines above for complete extraction
-    data = dict(itertools.islice(data.items(), 3)) 
-    references = dict(itertools.islice(references.items(), 3))
+    data = dict(itertools.islice(data.items(), 20)) 
+    references = dict(itertools.islice(references.items(), 20))
     candidates_extractor = candidatesExtraction(regular_expression,greedy)
     document_pairs = []
     documents_list = []

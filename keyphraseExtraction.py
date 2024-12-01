@@ -11,6 +11,16 @@ from torch.utils.data.dataloader import DataLoader
 
 from tqdm import tqdm
 
+def get_precission_recall_f1_score(number_matches_candidates: int, number_of_candidates:int , number_keyphrases: int) -> list[float, float, float]:
+    f1_score = 0.0
+    precission = float(number_matches_candidates) / float(number_of_candidates) if number_of_candidates!=0 else 0.0
+    recall = float(number_matches_candidates) / float(number_keyphrases) if number_keyphrases!=0 else 0.0
+    if (precission + recall == 0.0):
+        f1_score = 0
+    else:
+        f1_score = 2 * precission * recall / (precission + recall)
+    return precission, recall, f1_score
+
 def init(setting_dict: list, model_version: str) -> None:
     '''
     Init template, max length and tokenizer.
@@ -45,18 +55,18 @@ def keyphrase_selection(setting_dict: list, documents_list: list, labels_stemed:
         score = np.zeros(en_input_ids.shape[0])
         with torch.no_grad():   # disabling gradient calculation
             output = model(input_ids=en_input_ids, attention_mask=en_input_mask, decoder_input_ids=de_input_ids)[0]
-            for i in range(template_len, de_input_ids.shape[1] - 3):    # Range between the end of the prompt and the final of the candidate 
+            for i in range(template_len + 1, de_input_ids.shape[1] - 3):    # Range between the end of the prompt and the final of the candidate 
                 logits = output[:, i, :]    # selects the logits for all batches at position i in the sequence
                 logits = logits.softmax(dim=1)  # each candidate probability is also represented by a array length 32128
-                logits = logits.cpu().numpy()   # convert pythorch tensor into numpy array, this can only be done in the cpu
+                logits = logits.cpu().numpy()   # convert pythorch tensor into numpy array, this can only be done in the cpu, logits have the score to generating all the 250112 tensors
                 for j in range(de_input_ids.shape[0]):  # # j refers to each prompt+candidate input (index)
                     # TODO: el problema de las malas predicciones puede ser que esté dandose debido
                     # a que calculamos mal la longitud de los candidatos y cuando no tenemos que analizarlos
                     # más. Es por ello que los candidatos de mayor tamaño están sufriendo está penalización
-                    if i < dic["de_input_len"][j]:
+                    if i < dic["de_input_len"][j]-1:
                         score[j] = score[j] + np.log(logits[j, int(de_input_ids[j][i + 1])])    # to select corresponding tensor in vector score
-                    elif i == dic["de_input_len"][j]:
-                        score[j] = score[j] / np.power(dic["de_input_len"][j] - template_len, length_factor)    # calculate the penalty for candidate lenght
+                    elif i == dic["de_input_len"][j]-1:
+                        score[j] = score[j] / np.power(dic["de_input_len"][j] - template_len - 2, length_factor)    # calculate the penalty for candidate lenght
             doc_id_list.extend(dic["idx"])
             candidate_list.extend(dic["candidate"])
             cos_score_list.extend(score)
@@ -66,6 +76,9 @@ def keyphrase_selection(setting_dict: list, documents_list: list, labels_stemed:
     cos_similarity_list["score"] = cos_score_list
     cos_similarity_list["pos"] = pos_list
     cosine_similarity_rank = pd.DataFrame(cos_similarity_list)
+    number_of_candidates = 0
+    number_matches_candidates = 0
+    number_keyphrases = 0
     for i in range(len(documents_list)):
         doc_len = len(documents_list[i].split())
         doc_results = cosine_similarity_rank.loc[cosine_similarity_rank['doc_id']==i]
@@ -83,13 +96,22 @@ def keyphrase_selection(setting_dict: list, documents_list: list, labels_stemed:
                 candidates_dedup.append(temp)
         j = 0
         Matched = candidates_dedup[:15]
-        number_matches_15_first_candidates = 0
         #TODO: need to add porter = PorterStemmer()?
         for id, temp in enumerate(candidates_dedup[0:15]):
             if (temp in labels[i]):
                 Matched[id] = [temp]
-                number_matches_15_first_candidates += 1
+                number_matches_candidates += 1
             j += 1
         logger.info("TOP-K {}: {} \n".format(i, Matched))   
         logger.info("Reference {}: {} \n".format(i,labels[i]))
+        if (len(top_k[0:15]) == 15):
+            number_of_candidates += 15
+        else:
+            number_of_candidates += len(top_k[0:15])
+        number_keyphrases += len(labels[i])     # número de frases clave que tiene anotadas el documento
+    precission, recall, f1_score = get_precission_recall_f1_score(number_matches_candidates, number_of_candidates, number_keyphrases)
+    logger.info(f'Number of keyphrases = 15')
+    logger.info(f'Precission = {precission}')
+    logger.info(f'Recall = {recall}')
+    logger.info(f'F1 Score = {f1_score}')
     pass

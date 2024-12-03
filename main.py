@@ -3,6 +3,7 @@ import datetime
 import argparse
 
 from processDataset import clean_dataset
+import time
 from torch.utils.data import DataLoader
 
 from keyphraseExtraction import keyphrase_selection
@@ -13,11 +14,10 @@ def get_setting_dict(encoder_header: str, prompt: str, max_len: int, model_versi
     setting_dict["temp_en"] = encoder_header
     setting_dict["temp_de"] = prompt
     setting_dict["model"] = model_version
-    #TODO: what are the advantages of enable_filter and enable_pos
-    setting_dict["enable_filter"] = False
-    setting_dict["enable_pos"] = True
+    #setting_dict["enable_filter"] = False    #TODO: implement enable_filter
+    setting_dict["enable_pos"] = False   
     setting_dict["position_factor"] = 1.2e8
-    setting_dict["length_factor"] = 0.6
+    setting_dict["length_factor"] = 1.2   
     return setting_dict
 
 def parse_argument():
@@ -59,6 +59,21 @@ def parse_argument():
                         default= "base",
                         type= str,
                         help= "The version of MT5 moder to be used")
+    parser.add_argument("--length_factor",
+                        default=1,
+                        type=int,
+                        required=False,
+                        help="Length factor for being more prone to big or small candidates")
+    parser.add_argument("--position_factor",
+                        default=1.2e8,
+                        type=float,
+                        required=False,
+                        help="Hyper parameter to regulate position penalty")
+    parser.add_argument("--enable_pos",
+                        default=True,
+                        type=bool,
+                        required=False,
+                        help="Enable position penalty")
     args = parser.parse_args()
     return args
 
@@ -66,14 +81,25 @@ def main():
     args = parse_argument()
     logger = logging.getLogger(__name__)
     setting_dict = get_setting_dict(args.encoder_header, args.prompt, args.max_len, args.model_version)
-    logging.basicConfig(filename='PromptRankLib.log', encoding='utf-8', filemode='w', level=logging.DEBUG)
-    logger.info(f"The main program has started at {datetime.datetime.now()}")
+    start = time.time()
+    logging.basicConfig(filename='PromptRankLib.log', encoding='utf-8', filemode='w', level=logging.INFO)
+    logger.info(f"The main program has started at {datetime.datetime.now()}\n")
     # TODO: PASAR EL LOGGER A CLEAN DATASET PARA IR HACIENDO UN RASTREO DE LA EJECUCIÓN
     dataset, documents_list, labels, labels_stemed = clean_dataset(args.regular_expresion_value, args.title_graph_candidates_extraction, args.greedy,
                                                                    args.encoder_header, args.prompt, args.max_len, args.model_version)
     dataloader = DataLoader(dataset, num_workers=4, batch_size=args.batch_size)
     keyphrase_selection(setting_dict, documents_list, labels_stemed, labels, dataloader, logger, args.model_version)
+    end = time.time()
+    log_setting(logger, setting_dict)
     logger.info(f'The execution has finished {datetime.datetime.now()}')
+    logger.info("Processing time: {}".format(end-start))
+
+def log_setting(logger: logging.Logger , setting_dict: dict) -> None:
+    for i, j in setting_dict.items():
+        if i == 'length_factor':
+            logger.info(i + ": {}\n".format(j))
+        else:
+            logger.info(i + ": {}".format(j))
 
 if __name__ == "__main__":
     main()

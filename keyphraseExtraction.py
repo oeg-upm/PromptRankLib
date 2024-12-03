@@ -47,7 +47,7 @@ def keyphrase_selection(setting_dict: list, documents_list: list, labels_stemed:
     candidate_list = []
     cos_score_list = []
     pos_list = []
-    template_len = tokenizer(temp_de, return_tensors="pt")["input_ids"].shape[1] - 3    #TODO: investigate wy we subtract 3 from the length
+    template_len = tokenizer(temp_de, return_tensors="pt")["input_ids"].shape[1] - 3  
     for id, [en_input_ids,  en_input_mask, de_input_ids, dic] in enumerate(tqdm(dataloader,desc="Evaluating:")):    # dic = {"de_input_len":de_input_len, "candidate":candidate, "idx":idx, "pos":can_and_pos[1][0]}
         en_input_ids = en_input_ids.to(device)
         en_input_mask = en_input_mask.to(device)
@@ -60,9 +60,6 @@ def keyphrase_selection(setting_dict: list, documents_list: list, labels_stemed:
                 logits = logits.softmax(dim=1)  # each candidate probability is also represented by a array length 32128
                 logits = logits.cpu().numpy()   # convert pythorch tensor into numpy array, this can only be done in the cpu, logits have the score to generating all the 250112 tensors
                 for j in range(de_input_ids.shape[0]):  # # j refers to each prompt+candidate input (index)
-                    # TODO: el problema de las malas predicciones puede ser que esté dandose debido
-                    # a que calculamos mal la longitud de los candidatos y cuando no tenemos que analizarlos
-                    # más. Es por ello que los candidatos de mayor tamaño están sufriendo está penalización
                     if i < dic["de_input_len"][j]-1:
                         score[j] = score[j] + np.log(logits[j, int(de_input_ids[j][i + 1])])    # to select corresponding tensor in vector score
                     elif i == dic["de_input_len"][j]-1:
@@ -82,6 +79,9 @@ def keyphrase_selection(setting_dict: list, documents_list: list, labels_stemed:
     for i in range(len(documents_list)):
         doc_len = len(documents_list[i].split())
         doc_results = cosine_similarity_rank.loc[cosine_similarity_rank['doc_id']==i]
+        if enable_pos == True:
+            doc_results["pos"] = doc_results["pos"] / doc_len + position_factor / (doc_len ** 3)
+            doc_results["score"] = doc_results["pos"] * doc_results["score"]
         ranked_keyphrases = doc_results.sort_values(by='score', ascending=False)
         top_k = ranked_keyphrases.reset_index(drop = True)  # reseting the index and 
         top_k_can = top_k.loc[:, ['candidate']].values.tolist() # producing a list with orderer candidates
@@ -113,5 +113,5 @@ def keyphrase_selection(setting_dict: list, documents_list: list, labels_stemed:
     logger.info(f'Number of keyphrases = 15')
     logger.info(f'Precission = {precission}')
     logger.info(f'Recall = {recall}')
-    logger.info(f'F1 Score = {f1_score}')
+    logger.info(f'F1 Score = {f1_score}\n')
     pass

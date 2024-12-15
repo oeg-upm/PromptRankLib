@@ -8,16 +8,17 @@ from torch.utils.data import DataLoader
 
 from keyphraseExtraction import keyphrase_selection
 
-def get_setting_dict(encoder_header: str, prompt: str, max_len: int, model_version: str):
+def get_setting_dict(encoder_header: str, prompt: str, max_len: int, model_version: str,
+                     enable_pos: bool, position_factor: float, length_factor: float):
     setting_dict = {}
     setting_dict["max_len"] = max_len
     setting_dict["temp_en"] = encoder_header
     setting_dict["temp_de"] = prompt
     setting_dict["model"] = model_version
     #setting_dict["enable_filter"] = False    #TODO: implement enable_filter
-    setting_dict["enable_pos"] = False   
-    setting_dict["position_factor"] = 1.2e8
-    setting_dict["length_factor"] = 1.2   
+    setting_dict["enable_pos"] = enable_pos   
+    setting_dict["position_factor"] = position_factor
+    setting_dict["length_factor"] = length_factor 
     return setting_dict
 
 def parse_argument():
@@ -61,7 +62,7 @@ def parse_argument():
                         help= "The version of MT5 moder to be used")
     parser.add_argument("--length_factor",
                         default=1,
-                        type=int,
+                        type=float,
                         required=False,
                         help="Length factor for being more prone to big or small candidates")
     parser.add_argument("--position_factor",
@@ -70,7 +71,7 @@ def parse_argument():
                         required=False,
                         help="Hyper parameter to regulate position penalty")
     parser.add_argument("--enable_pos",
-                        default=True,
+                        default=False,
                         type=bool,
                         required=False,
                         help="Enable position penalty")
@@ -80,7 +81,8 @@ def parse_argument():
 def main():
     args = parse_argument()
     logger = logging.getLogger(__name__)
-    setting_dict = get_setting_dict(args.encoder_header, args.prompt, args.max_len, args.model_version)
+    setting_dict = get_setting_dict(args.encoder_header, args.prompt, args.max_len, args.model_version,
+                                    args.enable_pos, args.position_factor, args.length_factor)
     start = time.time()
     logging.basicConfig(filename='PromptRankLib.log', encoding='utf-8', filemode='w', level=logging.INFO)
     logger.info(f"The main program has started at {datetime.datetime.now()}\n")

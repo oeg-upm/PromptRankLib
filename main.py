@@ -61,7 +61,7 @@ def parse_argument():
                         type= str,
                         help= "The version of MT5 moder to be used")
     parser.add_argument("--length_factor",
-                        default=1,
+                        default=1.6,
                         type=float,
                         required=False,
                         help="Length factor for being more prone to big or small candidates")

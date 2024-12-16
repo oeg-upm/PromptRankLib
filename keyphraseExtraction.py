@@ -80,8 +80,8 @@ def keyphrase_selection(setting_dict: list, documents_list: list, labels_stemed:
         doc_len = len(documents_list[i].split())
         doc_results = cosine_similarity_rank.loc[cosine_similarity_rank['doc_id']==i]
         if enable_pos == True:
-            doc_results["pos"] = doc_results["pos"] / doc_len + position_factor / (doc_len ** 3)
-            doc_results["score"] = doc_results["pos"] * doc_results["score"]
+            doc_results.loc[:, "pos"] = doc_results["pos"] / doc_len + position_factor / (doc_len ** 3)
+            doc_results.loc[:, "score"] = doc_results["pos"] * doc_results["score"]
         ranked_keyphrases = doc_results.sort_values(by='score', ascending=False)
         top_k = ranked_keyphrases.reset_index(drop = True)  # reseting the index and 
         top_k_can = top_k.loc[:, ['candidate']].values.tolist() # producing a list with orderer candidates

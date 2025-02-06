@@ -8,6 +8,18 @@ from torch.utils.data import DataLoader
 
 from keyphraseExtraction import keyphrase_selection
 
+def greedy_type(value):
+    valid_options = {'FIRST', 'LONGEST', 'COMBINED', 'NONE'}
+    if value not in valid_options:
+        raise argparse.ArgumentTypeError(f"Invalid choice: {value}. Choose from {valid_options}")
+    return value
+
+def model_version_type(value):
+    valid_options = {'base', 'small', 'large'}
+    if value not in valid_options:
+        raise argparse.ArgumentTypeError(f"Invalid choice: {value}. Choose from {valid_options}")
+    return value
+
 def get_setting_dict(encoder_header: str, prompt: str, max_len: int, model_version: str,
                      enable_pos: bool, position_factor: float, length_factor: float):
     setting_dict = {}
@@ -30,7 +42,7 @@ def parse_argument():
     parser.set_defaults(regular_expresion_value=True)
     parser.add_argument("--greedy",
                         default="FIRST",
-                        type=str,
+                        type=greedy_type,
                         required=False,
                         help="Method to be used while extracting candidates with regular expresion. LONGEST/FIRST/COMBINED/NONE(we will get all coincidences)")
     parser.add_argument("--title_graph_candidates_extraction",
@@ -58,7 +70,7 @@ def parse_argument():
                         help= "Max length that the tokenizer will support for encoding the text")
     parser.add_argument("--model_version",
                         default= "base",
-                        type= str,
+                        type= model_version_type,
                         help= "The version of MT5 moder to be used")
     parser.add_argument("--length_factor",
                         default=1.6,

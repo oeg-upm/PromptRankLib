@@ -81,7 +81,7 @@ def keyphrase_selection(setting_dict: list, documents_list: list, labels_stemed:
         doc_results = cosine_similarity_rank.loc[cosine_similarity_rank['doc_id']==i]
         if enable_pos == True:
             doc_results.loc[:, "pos"] = doc_results["pos"] / doc_len + position_factor / (doc_len ** 3)
-            doc_results.loc[:, "score"] = doc_results["pos"] * doc_results["score"]
+            doc_results.loc[:, "score"] = (doc_results["pos"] * doc_results["score"]).astype(float)
         ranked_keyphrases = doc_results.sort_values(by='score', ascending=False)
         top_k = ranked_keyphrases.reset_index(drop = True)  # reseting the index and 
         top_k_can = top_k.loc[:, ['candidate']].values.tolist() # producing a list with orderer candidates
@@ -102,7 +102,7 @@ def keyphrase_selection(setting_dict: list, documents_list: list, labels_stemed:
                 Matched[id] = [temp]
                 number_matches_candidates += 1
             j += 1
-        logger.info("TOP-K {}: {} \n".format(i, Matched))   
+        logger.info("TOP-K15 {}: {} \n".format(i, Matched))   
         logger.info("Reference {}: {} \n".format(i,labels[i]))
         if (len(top_k[0:15]) == 15):
             number_of_candidates += 15

@@ -89,8 +89,8 @@ def clean_dataset( regular_expression : bool, graph_title: str, greedy: str, enc
             f.close()
     candidates = {}
     #TODO: remove 2 lines above for complete extraction
-    data = dict(itertools.islice(data.items(), 20)) 
-    references = dict(itertools.islice(references.items(), 20))
+    #data = dict(itertools.islice(data.items(), 20)) 
+    #references = dict(itertools.islice(references.items(), 20))
     candidates_extractor = candidatesExtraction(regular_expression,greedy)
     document_pairs = []
     documents_list = []

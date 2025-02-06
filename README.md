@@ -19,3 +19,38 @@ Para ejecutar el modelo y extraer las frases clave con los valores por defecto, 
 py.exe .\main.py
 ```
 Los resultados de la ejecución se guardarán en el fichero PromptRankLib.log.
+
+## Parámetros de entrada
+Si deseas modificar los parámetros del modelo, puedes hacerlo pasando argumentos en la línea de comandos. A continuación se detallan los principales parámetros disponibles:
+
+--regular_expresion / --no-regular_expresion: Habilita (True) o deshabilita (False) el uso de expresiones regulares para la extracción de candidatos.
+
+--greedy: Método de extracción de candidatos con expresión regular. Opciones disponibles: FIRST, LONGEST, COMBINED, NONE.
+
+--title_graph_candidates_extraction: Título del gráfico generado para la extracción de candidatos.
+
+--batch_size: Tamaño del lote (batch size) para evaluar el modelo. Valor por defecto: 128.
+
+--encoder_header: Texto que precederá a la entrada en el codificador. Valor por defecto: "Texto:".
+
+--prompt: Prompt que precederá al candidato en la entrada del modelo. Valor por defecto: "Este texto habla principalmente de ".
+
+--max_len: Longitud máxima permitida por el tokenizador al codificar el texto. Valor por defecto: 512.
+
+--model_version: Versión del modelo mT5 a utilizar. Opciones disponibles: base, small, large.
+
+--length_factor: Factor de longitud para favorecer candidatos más largos o más cortos. Valor por defecto: 1.6.
+
+--position_factor: Hiperparámetro que regula la penalización por posición. Valor por defecto: 1.2e8.
+
+--enable_pos: Activa (True) o desactiva (False) la penalización por posición. Valor por defecto: False.
+
+## Ejemplo de ejecución con parámetros personalizados:
+
+Si deseas ejecutar el modelo con un batch_size de 64, utilizando el modelo large, y con el Prompt 'Este texto trata de ' puedes hacerlo con el siguiente comando:
+
+```bash
+py.exe .\main.py --batch_size 64 --model_version large --prompt 'Este texto trata de '
+```
+
+En la carpeta /vscode hay disponible un archivo launch.json para debuggear el modelo con diferentes valores de los parámetros de entrada.

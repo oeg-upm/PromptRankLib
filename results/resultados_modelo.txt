@@ -1,0 +1,9 @@
+RESULTADOS KEYPHRASES EXTRAIDAS
+FECHA EJECUCION: 2025-02-21 20:07:10.129058
+
+Resultados para el Documento[0]:
+ aumento de entropía, irreversibilidad asociada con las transferencias de calor, embargo, optimización de la geometría de los cilindros, medida de la dispersión de energía, entropía de un sistema aislado, mejora de los materiales, entropía debido, medida, entropía, eficiencia energética global, ende, energía térmica, segunda ley de la termodinámica, procesos termodinámicos
+
+Resultados para el Documento[1]:
+ incremento de dióxido de carbono, resiliencia de los ecosistemas marinos, aumento de las temperaturas oceánicas, corales, estrategias de conservación basadas, estructura de los ecosistemas marinos, ecosistemas marinos, arrecifes de coral, cambios climáticos globales, relación simbiótica con algas microscópicas, seguridad alimentaria de millones de personas, biodiversidad oceánica, acidificación de los océanos, blanqueo de corales, supervivencia de muchas especies
+

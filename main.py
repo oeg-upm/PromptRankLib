@@ -40,6 +40,9 @@ def parse_argument():
     parser.add_argument('--no-regular_expresion', dest='regular_expresion_value', action='store_false',
                     help='Set the regular_expresion value to False.')
     parser.set_defaults(regular_expresion_value=True)
+    parser.add_argument('--evaluation', dest='evaluation_value', action='store_true', help='Set to True the Evaluation of the Model in the dataset')
+    parser.add_argument('--no_evaluation', dest='evaluation_value', action='store_false', help='Set to False the Evaluation of the Model in the dataset')
+    parser.set_defaults(evaluation_value=False)
     parser.add_argument("--greedy",
                         default="FIRST",
                         type=greedy_type,
@@ -87,22 +90,40 @@ def parse_argument():
                         type=bool,
                         required=False,
                         help="Enable position penalty")
+    parser.add_argument("--data_path",
+                    default="data/docsutf8",
+                    type=str,
+                    required=False,
+                    help="Path to the data directory")
+
+    parser.add_argument("--labels_path",
+                    default="data/keys",
+                    type=str,
+                    required=False,
+                    help="Path to the labels directory")
     args = parser.parse_args()
     return args
 
 def main():
     args = parse_argument()
     logger = logging.getLogger(__name__)
-    setting_dict = get_setting_dict(args.encoder_header, args.prompt, args.max_len, args.model_version,
+    setting_dict = get_setting_dict(args    .encoder_header, args.prompt, args.max_len, args.model_version,
                                     args.enable_pos, args.position_factor, args.length_factor)
     start = time.time()
     logging.basicConfig(filename='PromptRankLib.log', encoding='utf-8', filemode='w', level=logging.INFO)
     logger.info(f"The main program has started at {datetime.datetime.now()}\n")
     # TODO: PASAR EL LOGGER A CLEAN DATASET PARA IR HACIENDO UN RASTREO DE LA EJECUCIÓN
     dataset, documents_list, labels, labels_stemed = clean_dataset(args.regular_expresion_value, args.title_graph_candidates_extraction, args.greedy,
-                                                                   args.encoder_header, args.prompt, args.max_len, args.model_version)
+                                                                   args.encoder_header, args.prompt, args.max_len, args.model_version, data_path=args.data_path, 
+                                                                   labels_path=args.labels_path, evaluation=args.evaluation_value)
     dataloader = DataLoader(dataset, num_workers=4, batch_size=args.batch_size)
-    keyphrase_selection(setting_dict, documents_list, labels_stemed, labels, dataloader, logger, args.model_version)
+    if args.evaluation_value is False:
+        file_name = "results/resultados_modelo.txt"
+        with open(file_name, "w",  encoding="utf-8") as f:
+            f.write("")
+            f.write("RESULTADOS KEYPHRASES EXTRAIDAS\n")
+            f.write(f'FECHA EJECUCION: {datetime.datetime.now()}\n\n')
+    keyphrase_selection(setting_dict, documents_list, labels_stemed, labels, dataloader, logger, args.model_version, args.evaluation_value)
     end = time.time()
     log_setting(logger, setting_dict)
     logger.info(f'The execution has finished {datetime.datetime.now()}')

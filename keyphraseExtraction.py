@@ -35,8 +35,17 @@ def init(setting_dict: list, model_version: str) -> None:
 
     tokenizer = MT5Tokenizer.from_pretrained(f"google/mt5-{model_version}", model_max_length=MAX_LEN)
 
+def show_results(document_index:int, keyphrases:list[list[str]]) -> None:
+    file_name = "results/resultados_modelo.txt"
+    keyphrases_flat = [phrase[0] for phrase in keyphrases]
+    keyphrases_str = ", ".join(keyphrases_flat)
+    with open(file_name, "a",  encoding="utf-8") as f:
+        f.write(f'Resultados para el Documento[{document_index}]:\n {keyphrases_str}\n\n')
+    pass
+
 def keyphrase_selection(setting_dict: list, documents_list: list, labels_stemed: list,
-                         labels: list, dataloader: DataLoader, logger: Logger, model_version: str) -> None:
+                         labels: list, dataloader: DataLoader, logger: Logger, model_version: str,
+                         evaluation: bool) -> None:
     init(setting_dict, model_version)
     device = torchDevice("cuda:0" if torch.cuda.is_available() else "cpu")
     model = MT5ForConditionalGeneration.from_pretrained(f"google/mt5-{model_version}")
@@ -86,6 +95,9 @@ def keyphrase_selection(setting_dict: list, documents_list: list, labels_stemed:
         top_k = ranked_keyphrases.reset_index(drop = True)  # reseting the index and 
         top_k_can = top_k.loc[:, ['candidate']].values.tolist() # producing a list with orderer candidates
         candidates_set = set()  # for query for exiting values in an easier way
+        if evaluation is False:
+            show_results(document_index=i, keyphrases=top_k_can[:15])
+            continue
         candidates_dedup = []   # for selecting top_k candidates
         for temp in top_k_can:
             temp = temp[0].lower()
@@ -109,9 +121,10 @@ def keyphrase_selection(setting_dict: list, documents_list: list, labels_stemed:
         else:
             number_of_candidates += len(top_k[0:15])
         number_keyphrases += len(labels[i])     # número de frases clave que tiene anotadas el documento
-    precission, recall, f1_score = get_precission_recall_f1_score(number_matches_candidates, number_of_candidates, number_keyphrases)
-    logger.info(f'Number of keyphrases = 15')
-    logger.info(f'Precission = {precission}')
-    logger.info(f'Recall = {recall}')
-    logger.info(f'F1 Score = {f1_score}\n')
+    if evaluation is True:
+        precission, recall, f1_score = get_precission_recall_f1_score(number_matches_candidates, number_of_candidates, number_keyphrases)
+        logger.info(f'Number of keyphrases = 15')
+        logger.info(f'Precission = {precission}')
+        logger.info(f'Recall = {recall}')
+        logger.info(f'F1 Score = {f1_score}\n')
     pass

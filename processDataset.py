@@ -66,7 +66,7 @@ def generate_doc_pairs(doc: str, candidates: list, idx: int, tokenizer: T5Tokeni
     return candidate_document_pairs, 0      #TODO: implement the count value
     
 def clean_dataset( regular_expression : bool, graph_title: str, greedy: str, encoder_header: str, prompt: str, max_len: int,
-                   model_version: str, data_path="data/docsutf8", labels_path="data/keys"):
+                   model_version: str, data_path:str, labels_path:str, evaluation:bool):
     data = {}
     references = {}
     for dirname,dirnames ,filenames in os.walk(data_path):
@@ -88,16 +88,18 @@ def clean_dataset( regular_expression : bool, graph_title: str, greedy: str, enc
             references[left] = text_lower.split('\n')   
             f.close()
     candidates = {}
-    #TODO: remove 2 lines above for complete extraction
-    #data = dict(itertools.islice(data.items(), 20)) 
-    #references = dict(itertools.islice(references.items(), 20))
+    """Si no se quiere probar en todo el dataset, hacer división de la 
+    base de datos con las dos líneas de abajo"""
+    #data = dict(itertools.islice(data.items(), 2)) 
+    #references = dict(itertools.islice(references.items(), 2))
     candidates_extractor = candidatesExtraction(regular_expression,greedy)
     document_pairs = []
     documents_list = []
     labels = []
     tokenizer = MT5Tokenizer.from_pretrained(f"google/mt5-{model_version}")
     for idx, (key, doc) in tqdm(enumerate(data.items()),desc="Calculating the candidates of each document",total=len(data)):
-        labels.append([ref.replace(" \n", "") for ref in references[key]])
+        if evaluation is True:
+            labels.append([ref.replace(" \n", "") for ref in references[key]])
         candidates_of_each_doc = candidates_extractor.extract_candidates(doc, key)    # get the candidates with FORMAT [(candidate1,pos),(candidate2,pos),...]
         candidates[key] = candidates_of_each_doc    # get the candidates with FORMAT [(candidate1,pos),(candidate2,pos),...]
         doc = ' '.join(doc.split()[:max_len])
